@@ -13,15 +13,15 @@ float Processor::Utilization()
 
     Update(idle_new, active_new, total_new);
 
-    long totalDelta = total_new - total_old;
-    long idleDelta = idle_new - idle_old;
+    float totalDelta = static_cast<float>(total_new) - static_cast<float>(total_old);
+    float idleDelta = static_cast<float>(idle_new) - static_cast<float>(idle_old);
 
     float utilization = (totalDelta - idleDelta) / totalDelta;
     if (utilization > 0) return utilization;
     return 0;
 }
 
-long Processor::CurrentTotal() { return LinuxParser::ActiveJiffies(); }
+long Processor::CurrentTotal() { return LinuxParser::Jiffies(); }
 long Processor::CurrentActive() { return LinuxParser::ActiveJiffies(); }
 long Processor::CurrentIdle() { return LinuxParser::IdleJiffies(); }
 
