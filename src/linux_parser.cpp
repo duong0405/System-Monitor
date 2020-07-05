@@ -3,6 +3,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 #include "linux_parser.h"
 
@@ -48,22 +49,18 @@ string LinuxParser::Kernel() {
 }
 
 // BONUS: Update this to use std::filesystem
-vector<int> LinuxParser::Pids() {
+vector<int> LinuxParser::Pids() 
+{
   vector<int> pids;
-  DIR* directory = opendir(kProcDirectory.c_str());
-  struct dirent* file;
-  while ((file = readdir(directory)) != nullptr) {
-    // Is this a directory?
-    if (file->d_type == DT_DIR) {
-      // Is every character of the name a digit?
-      string filename(file->d_name);
-      if (std::all_of(filename.begin(), filename.end(), isdigit)) {
-        int pid = stoi(filename);
-        pids.push_back(pid);
-      }
+  for (auto& p : std::filesystem::directory_iterator(kProcDirectory)) 
+  {
+    string filename = p.path().filename();
+    if (p.is_directory() && std::all_of(filename.begin(), filename.end(), isdigit)) 
+    {
+      int pid = stoi(filename);
+      pids.push_back(pid);
     }
   }
-  closedir(directory);
   return pids;
 }
 
@@ -133,27 +130,19 @@ long LinuxParser::ActiveJiffies(int pid)
   }
 
   // make sure parsing was correct and values was read
-  long utime, stime, cutime, cstime;
-  try {
+  long utime = 0, stime = 0 , cutime = 0, cstime = 0;
+  if (std::all_of(values[13].begin(), values[13].end(), isdigit))
     utime = stol(values[13]);
-  } catch (...) {
-    utime = 0;
-  }
-  try {
+
+  if (std::all_of(values[14].begin(), values[14].end(), isdigit))
     stime = stol(values[14]);
-  } catch (...) {
-    stime = 0;
-  }
-  try {
+  
+  if (std::all_of(values[15].begin(), values[15].end(), isdigit))
     cutime = stol(values[15]);
-  } catch (...) {
-    cutime = 0;
-  }
-  try {
-    cstime = stol(values[16]);
-  } catch (...) {
-    cstime = 0;
-  }
+  
+  if (std::all_of(values[16].begin(), values[16].end(), isdigit))
+     cstime = stol(values[16]);
+
   totaltime = utime + stime + cutime + cstime;
   return totaltime / sysconf(_SC_CLK_TCK);
 }
